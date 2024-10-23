@@ -116,7 +116,6 @@ solution fib(matrix(*ff)(matrix, matrix, matrix), double a, double b, double eps
 			Ci(b - (fi[k - 1] / fi[k] * (b - a))),
 			Di(a + b - Ci.x(0));
 		for (int i = 0; i < k - 2; i++) {
-			cout << i << "fib: " << Bi.x - Ai.x << endl;
 			Ci.fit_fun(ff);
 			Di.fit_fun(ff);
 			if (Ci.y(0) < Di.y(0))Bi = Di;
@@ -144,7 +143,6 @@ solution lag(matrix(*ff)(matrix, matrix, matrix), double a, double b, double eps
 		int i = 0;
 		double l, m;
 		do {
-			cout << "lag: " << Bi.x - Ai.x << endl;
 			Ai.fit_fun(ff, ud1, ud2); Bi.fit_fun(ff, ud1, ud2); Ci.fit_fun(ff, ud1, ud2);
 			l = Ai.y(0) * (pow(Bi.x(0), 2) - pow(Ci.x(0), 2))
 				+ Bi.y(0) * (pow(Ci.x(0), 2) - pow(Ai.x(0), 2))
@@ -190,8 +188,6 @@ solution lag(matrix(*ff)(matrix, matrix, matrix), double a, double b, double eps
 		throw ("solution lag(...):\n" + ex_info);
 	}
 }
-
-
 
 solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alpha, double epsilon, int Nmax, matrix ud1, matrix ud2) {
 	try {
@@ -259,7 +255,6 @@ solution HJ_trial(matrix(*ff)(matrix, matrix, matrix), solution X, double s, mat
 		throw ("solution HJ_trial(...):\n" + ex_info);
 	}
 }
-
 
 solution Rosen(matrix(*ff)(matrix, matrix, matrix), matrix x0, matrix s0, double alpha, double beta, double epsilon, int Nmax, matrix ud1, matrix ud2){
 	try
@@ -333,7 +328,6 @@ solution Rosen(matrix(*ff)(matrix, matrix, matrix), matrix x0, matrix s0, double
 		throw ("solution Rosen(...):\n" + ex_info);
 	}
 }
-
 
 solution pen(matrix(*ff)(matrix, matrix, matrix), matrix x0, double c, double dc, double epsilon, int Nmax, matrix ud1, matrix ud2)
 {
