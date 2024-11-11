@@ -97,6 +97,11 @@ matrix ff1R(matrix x, matrix ud1, matrix ud2)
 
 matrix ff2T(matrix x, matrix ud1, matrix ud2)
 {
-	return 0;
-
+	double x1 = x(0);
+	double x2 = x(1);
+	return pow(x1, 2) + pow(x2, 2) - cos(2.5 * M_PI * x1) - cos(2.5 * M_PI * x2) + 2;
 }
+
+//matrix ff2R(matrix x, matrix ud1, matrix ud2) {}
+
+//matrix df2(){}
