@@ -192,32 +192,32 @@ void lab2()
 		<< "R_x1,R_x2,y,Liczba wywolan funkcji celu,Minimum globalne\n";
 
 	//100 optymalizacji:
+	//for (int i = 0; i < 100; i++) {
+	//	//generowanie punktow startowych <-1,1>
+	//	x(0) = (((double)rand() / RAND_MAX) * 2) - 1;
+	//	x(1) = (((double)rand() / RAND_MAX) * 2) - 1;
+
+	//	//cout << "HJ-test start" << endl;
+	//	//cout << "x1: " << x(0) << "\nx2: " << x(1) << endl;
+	//	solution HJ_test = HJ(ff2T, x, s, alphaHJ, epsilon, Nmax);
+	//	//cout << "HJ test done" << endl;
+
+	//	//sprawdzenie czy globalne czy lokalne
+	//	string HJ_czy = (HJ_test.x(0) < 0.1 && HJ_test.x(0) > -0.1 && HJ_test.x(1) < 0.1 && HJ_test.x(1) > -0.1) ? "TAK" : "NIE" ; 		// Określenie, czy minimum jest lokalne czy globalne
+
+	//	//cout << "Osiagnieta f(x1,x2): " << HJ_test.y << "\n";
+	//	//cout << " x1 = " << HJ_test.x(0)
+	//	//	<< " x2 = " << HJ_test.x(1) << "\n";
+	//	//cout << "Minimum " << HJ_czy << endl;
+
+	//	testfunkc << s << "," << i + 1 << "," << x(0) << "," << x(1) << ","
+	//		<< HJ_test.x(0) << "," << HJ_test.x(1) << "," << HJ_test.y(0) << ","<< solution::f_calls << "," << HJ_czy << "\n";
+	//	solution::clear_calls();
+	//}
+	//
+	
+
 	for (int i = 0; i < 100; i++) {
-		//generowanie punktow startowych <-1,1>
-		x(0) = (((double)rand() / RAND_MAX) * 2) - 1;
-		x(1) = (((double)rand() / RAND_MAX) * 2) - 1;
-
-		//cout << "HJ-test start" << endl;
-		//cout << "x1: " << x(0) << "\nx2: " << x(1) << endl;
-		solution HJ_test = HJ(ff2T, x, s, alphaHJ, epsilon, Nmax);
-		//cout << "HJ test done" << endl;
-
-		//sprawdzenie czy globalne czy lokalne
-		string HJ_czy = (HJ_test.x(0) < 0.1 && HJ_test.x(0) > -0.1 && HJ_test.x(1) < 0.1 && HJ_test.x(1) > -0.1) ? "TAK" : "NIE" ; 		// Określenie, czy minimum jest lokalne czy globalne
-
-		//cout << "Osiagnieta f(x1,x2): " << HJ_test.y << "\n";
-		//cout << " x1 = " << HJ_test.x(0)
-		//	<< " x2 = " << HJ_test.x(1) << "\n";
-		//cout << "Minimum " << HJ_czy << endl;
-
-		testfunkc << s << "," << i + 1 << "," << x(0) << "," << x(1) << ","
-			<< HJ_test.x(0) << "," << HJ_test.x(1) << "," << HJ_test.y(0) << ","<< solution::f_calls << "," << HJ_czy << "\n";
-		solution::clear_calls();
-	}
-	
-	
-
-	/*for (int i = 0; i < 100; i++) {
 		//generowanie punktow startowych <-1,1>
 		x(0) = (((double)rand() / RAND_MAX) * 2) - 1;
 		x(1) = (((double)rand() / RAND_MAX) * 2) - 1;
@@ -233,12 +233,13 @@ void lab2()
 		/*	cout << "Osiagnieta f(x1,x2): " << HJ_test.y << "\n";
 			cout << " x1 = " << HJ_test.x(0)
 				<< " x2 = " << HJ_test.x(1) << "\n";
-			cout << "Minimum " << HJ_czy << endl;*//*
+			cout << "Minimum " << HJ_czy << endl;*/
+		cout << R_test << endl;
 
 		testfunkc << s << "," << i + 1 << "," << x(0) << "," << x(1) << ","
 			<< R_test.x(0) << "," << R_test.x(1) << "," << R_test.y(0) << "," << solution::f_calls << "," << R_czy << "\n";
 
-	}*/
+	}
 
 	testfunkc.close();
 

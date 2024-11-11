@@ -163,14 +163,16 @@ solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alp
 {
 	try
 	{
+
 		solution::clear_calls();
 		solution Xopt = x0;
 		solution xB = x0;
 		solution x_B;
+
 		do
 		{
-			cout << "START\n";
-			cout << Xopt << endl;
+			//cout << "START\n";
+			//cout << Xopt << endl;
 			xB = Xopt;
 			xB.fit_fun(ff, ud1, ud2);
 			Xopt = HJ_trial(ff, xB, s, ud1, ud2);
@@ -187,7 +189,7 @@ solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alp
 						cout << xB << endl;
 						throw string("Liczba wywolan przekracza Nmax");
 					}
-				} while (Xopt.y >= xB.y);
+				} while (Xopt.y < xB.y);
 				Xopt = xB;
 			}
 			else
@@ -198,12 +200,12 @@ solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alp
 				cout << xB << endl;
 				throw string("Liczba wywolan przekracza Nmax");
 			}
-		} while (s < epsilon);
+		} while (s >= epsilon);
 
 		Xopt = xB; 
 		Xopt.flag = 1;
 		cout << "Xopt\n" << Xopt << endl;
-		cout << "xB\n" << xB << endl;
+		//cout << "xB\n" << xB << endl;
 		return Xopt;
 	}
 	catch (string ex_info)
@@ -217,16 +219,18 @@ solution HJ_trial(matrix(*ff)(matrix, matrix, matrix), solution XB, double s, ma
 {
 	try
 	{
-		solution tmp(XB); //tworzenie tmp soultion 
+		solution tmp(XB);
 		int n = get_dim(XB);  //n = wymiar problemu
-		matrix jednostkowa = ident_mat(n); //tworzenie macierzy jendostkowej
-		for (int i = 0; i < n; i++) {	//szukanie minimum w otoczeniu o promieniu s // moze i =0
-			tmp = XB.x + s * jednostkowa(i, i);
+		matrix jednostkowa = ident_mat(n); //tworzenie macierzy jendostkowej e(j)
+		for (int i = 0; i < n; i++) {	//szukanie minimum w otoczeniu o promieniu s
+
+			tmp = XB.x + s * jednostkowa[i]; // uzywamy i tego wektora z macierzy jednostkowej.
 			tmp.fit_fun(ff, ud1, ud2);
+
 			if (tmp.y < XB.y) //Jezeli y jest mniejszy po kroku w przod
 				XB = tmp;
 			else {
-				tmp = XB.x - s * jednostkowa(i, i); //Jezeli y jest mniejszy po kroku w tyl
+				tmp = XB.x - s * jednostkowa[i]; //Jezeli y jest mniejszy po kroku w tyl
 				tmp.fit_fun(ff, ud1, ud2);
 				if (tmp.y < XB.y)
 					XB = tmp;
@@ -244,104 +248,99 @@ solution Rosen(matrix(*ff)(matrix, matrix, matrix), matrix x0, matrix s0, double
 {
 	try
 	{
-		// Inicjalizacja podstawowych zmiennych
+		//inicjalizacja podstawowych zmiennych;
 		solution::clear_calls();
-		int n = get_dim(x0);
-		matrix d = ident_mat(n);
-		matrix lambda(n, 1), p(n, 1), s(s0);
+		solution Xopt;
 		solution xB(x0);
-		xB.fit_fun(ff, ud1, ud2);
 
-		while (true)
+		int i = 0;	//iteracje
+		int j = 0; //wymiar
+
+		int n = get_dim(x0); //liczba wymiarow
+		matrix jendostkowa = ident_mat(n); //macierz jednostkowa; wersory
+		matrix lambda(n, 1); //wartosci przesuniecia
+		matrix p(n, 1);	// liczba niepowodzen
+		matrix s(s0); // przesuniecia
+
+		//zmiana kierunku poszukiwan
+		matrix Q(n, n);
+		matrix D(n, 1);
+		//cout << "dziala\n";
+
+
+		double dlugosc_kroku = abs(s(0)); //wykorzystywany do zakonczenia do... while
+		//Rozpoczecie poszukiwan
+		do //max j(|s(j)|) < epsilon
 		{
-			// Iteracja po wymiarach
-			for (int j = 0; j < n; j++)
-			{
-				solution next_xB(xB.x + s(j) * d[j]);
-				next_xB.fit_fun(ff, ud1, ud2);
-				if (next_xB.y < xB.y)
-				{
-					xB = next_xB;
-					lambda(j) += s(j);
-					s(j) *= alpha;
+			for (j; j < n; j++) { // j - wymiar
+				xB.fit_fun(ff, ud1, ud2);
+				Xopt.x = xB.x + s(j) * jendostkowa[j]; //wektor macierzy jednostkowej;
+				Xopt.fit_fun(ff, ud1, ud2);
+				if (Xopt.y < xB.y) {
+					xB = xB.x + s(j) + jendostkowa[j]; // albo xB = Xopt.x; 
+					lambda(j) = lambda(j) + s(j);
+					s(j) = alpha * s(j);
 				}
 				else
 				{
-					s(j) *= -beta;
-					p(j)++;
-				}
+					s(j) = -beta * s(j); 
+					p(j)++; 
+				}// wyniki labda(j), s(j) i p(j) sa juz dla kolejnej iteracji i+1;
 			}
+			i = i + 1;
+			Xopt = xB;
 
-			// Sprawdzenie czy trzeba zmienić kierunek poszukiwań
-			bool change = true;
-			for (int j = 0; j < n; j++)
-			{
-				if (lambda(j) == 0 || p(j) == 0)
-				{
-					change = false;
-					break;
-				}
-			}
+			cout << Xopt << endl;
+			//cout << p(n-1) << endl;
+			//cout << lambda(n-1) << endl;
+			//cout << j << endl;
+			// 
+			//Zmiana kierunuku poszukiwan
+			if (lambda(j,0) != 0 && p(j,0) != 0) {//ERROR tutaj w tych tablicach : INDEKS JEST POZA ZAKRESEM:
 
-			if (change)
-			{
-				matrix Q(n, n);
-				for (int j = 0; j < n; j++)
-				{
-					for (int k = 0; k <= j; k++)
-					{
-						Q(j, k) = lambda(j);
+				//tworzenie Qi
+				//matrix Q(n, n); //macierz wypelniona 0;
+				for (int k = 0; k < n; k++) {
+					for (int l = 0; l <= k; l++) {
+						Q(k, j) = lambda(k);
 					}
 				}
-
-				Q = Q * d;
-				matrix v = Q[0];
-				d.set_col(v / norm(v), 0);
-				for (int j = 1; j < n; j++)
-				{
+				Q = Q * jendostkowa; // operator* przeciazony
+				matrix v(n, 1);
+				v = Q[0];
+				jendostkowa.set_col(v / norm(v), 0);
+				for (int k = 1; k < n; k++) {
 					matrix sum(n, 1);
-					for (int k = 0; k < j; k++)
-					{
-						sum = sum + (trans(Q[j]) * d[k]) * d[k];
+					for (int l = 0; l < k; l++) {
+						sum = sum + (trans(Q[k] * jendostkowa[l]) * jendostkowa[k]);
+						v = Q[k] - sum;
+						jendostkowa.set_col(v / norm(v), j);
 					}
-					v = Q[j] - sum;
-					d.set_col(v / norm(v), j);
 				}
-
-				s = s0;
 				lambda = matrix(n, 1);
 				p = matrix(n, 1);
+				s = s0;
 			}
-
-			// Warunek zakończenia poszukiwań
-			if (solution::f_calls > Nmax)
-			{
-				xB.flag = 0;
-				return xB;
+			if (solution::f_calls > Nmax) {
+				cout << Xopt<< endl;
+				cout << xB << endl;
+				throw string("Liczba wywolan przekracza Nmax");
 			}
-
-			double max_step = abs(s(0));
-			for (int j = 1; j < n; ++j)
-			{
-				if (max_step < abs(s(j)))
-					max_step = abs(s(j));
+			//Znalezienie max kroku w tablicy wektorow dlugosci kroku
+			for (int k = 1; k < n; ++k) {
+				if (dlugosc_kroku < abs(s(k)))
+					dlugosc_kroku = abs(s(k));
 			}
-
-			if (max_step < epsilon)
-			{
-				xB.flag = 1;
-				break;
-			}
-		}
-
-		return xB;
+		} while (dlugosc_kroku >= epsilon);
+		Xopt = xB;
+		Xopt.flag = 1;
+		return Xopt;
 	}
 	catch (string ex_info)
 	{
 		throw ("solution Rosen(...):\n" + ex_info);
 	}
 }
-
 
 //lab 3
 
