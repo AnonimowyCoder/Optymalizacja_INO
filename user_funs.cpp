@@ -36,6 +36,8 @@ matrix df0(double t, matrix Y, matrix ud1, matrix ud2)
 	return dY;
 }
 
+//LAB 1
+
 matrix ff1T(matrix x, matrix ud1, matrix ud2)
 {
 	double arg = m2d(x);
@@ -79,7 +81,6 @@ matrix df1(double t, matrix Y, matrix ud1, matrix ud2) {
 	return dY;
 }
 
-
 matrix ff1R(matrix x, matrix ud1, matrix ud2)
 {
 	matrix y;
@@ -95,6 +96,8 @@ matrix ff1R(matrix x, matrix ud1, matrix ud2)
 	return y;
 }
 
+//LAB 2
+
 matrix ff2T(matrix x, matrix ud1, matrix ud2)
 {
 	double x1 = x(0);
@@ -102,6 +105,157 @@ matrix ff2T(matrix x, matrix ud1, matrix ud2)
 	return pow(x1, 2) + pow(x2, 2) - cos(2.5 * M_PI * x1) - cos(2.5 * M_PI * x2) + 2;
 }
 
-//matrix ff2R(matrix x, matrix ud1, matrix ud2) {}
+matrix df2(double t, matrix Y, matrix ud1, matrix ud2) {
+	double b = 0.5; //wspolczynnik tarcia [N*m*s]
+	double Mr = 1; //masa ramienia robota [kg]
+	double Mc = 5; //Masa ciezarka [kg]
+	double l = 1;  // dlugosc ramienia robota [m]
+	double I = ((Mr * pow(l, 2)) / 3.0) + (Mc * pow(l, 2)); //Obliczenie momentu bezwladnosci [kg*m^2]
 
-//matrix df2(){}
+	double alfa_zad = M_PI; // wartosc docelowa kata
+	double omega_zad = 0.0;  // wartosc docelowa predkosci katowej
+
+	double k1 = ud1(0, 0); //wektor ud1 przechowuje wspolczynniki wzmocnienia
+	double k2 = ud1(1, 0);
+
+	double alfa = Y(0, 0);
+	double omega = Y(1, 0);
+
+	double M = k1 * (alfa_zad - alfa) + k2 * (omega_zad - omega);
+
+	matrix dY(2, 1);	//wektor rozniczki
+	dY(0, 0) = omega;
+	dY(1, 0) = (M - b * omega) / I;
+	return dY;
+}
+
+matrix ff2R(matrix x, matrix ud1, matrix ud2) {
+	double t0 = 0.0; //czas poczatkowy
+	double dt = 0.1; //krok czasowy
+	double t_end = 100; //czas koncowy
+	matrix Y0(2, 1); //warunki poczatkowe
+
+
+	matrix* diff_sol = solve_ode(df2, t0, dt, t_end, Y0, x); //rozwiazwywanie ukladu RR
+
+	double alfa_zad = M_PI;
+	double omega_zad = 0.0;
+
+	double alfa_t = 0;
+	double omega_t = 0;
+	double M = 0;
+	double Q = 0.0;
+	for (int i = 0; i < get_len(diff_sol[0]); i++) {
+		alfa_t = diff_sol[1](i, 0);
+		omega_t = diff_sol[1](i, 1);
+		M = x(0, 0) * (alfa_zad - alfa_t) + x(1, 0) * (omega_zad - omega_t);
+		Q += dt * (10 * pow(alfa_zad - alfa_t, 2) + pow(omega_zad - omega_t, 2) + M * M);
+	}
+
+	return Q;
+
+}
+
+//LAB 3
+matrix ff3T(matrix x, matrix ud1, matrix ud2)
+{
+	//ud2(0) = c - współczynnik c>0
+	double x1 = x(0);
+	double x2 = x(1);
+	double x1_PI = x1 / M_PI;
+	double x2_PI = x2 / M_PI;
+	double up = sin(M_PI * sqrt(pow(x1_PI, 2) + pow(x2_PI, 2)));
+	double down = M_PI * sqrt(pow(x1_PI, 2) + pow(x2_PI, 2));
+	matrix y = up / down;
+	
+	//zewn S(x)
+	if (ud2(1) > 1) {
+		if (1 > x(0)) 
+			y = y + ud2(0) * pow(-x(0) + 1, 2); //g1
+		if (1 > x(1)) 
+			y = y + ud2(0) * pow(-x(1) + 1, 2); //g2
+		if (norm(x) > ud1(0)) 
+			y = y + ud2(0) * pow(norm(x) - ud1(0), 2); //g3 //ud1(0) = parametr a
+		return y;
+	}
+	//wewn S(x)
+	if (1 > x(0)) y = 1e10;
+	else y = y - ud2(0) / (1 - x(0)); //c/1-g1
+
+	if (1 > x(1)) y = 1e10;
+	else y = y - ud2(0) / (1 - x(1)); //c / 1-g2
+
+	if (norm(x) > ud1(0)) y = 1e10;
+	else y = y - ud2(0) / (norm(x) - ud1(0)); //ud1(0) = parametr a // c/ norm(x) - a
+
+	return y;
+}
+
+matrix ff3R(matrix x, matrix ud1, matrix ud2)
+{
+	//Dane startowe
+	double t0 = 0.0;
+	double tend = 7.0;
+	double dt = 0.01;
+	matrix Y0(4, new double[4] {
+		x(0),	//V0x =V0x
+		0,		//V0y = 0
+		0,		//x0 = 0
+		100,	//y0 = 100 m
+		});
+
+	matrix omega(1, new double[1]{ x(1)});
+	matrix* diff_solution = solve_ode(df3, t0,dt,tend, Y0,ud1, omega);
+
+	int n = get_len(diff_solution[0]);
+	int maxval1, maxval2;
+	cout << diff_solution[1] << endl;
+
+	//Implementacja Funkcji Kary zewnetrznej	S(x) = E pow(max(0, gi()),2);
+	
+	for(int i = 0; i < n; i++) {
+		//Sprawdzenie warunku czy przy y 50, x e <4.5 ;5.5>
+		/*if(abs(diff_solution[1](i,1) -50) )
+		if(abs(diff_solution[1](i,1)) )*/
+
+	}
+
+	
+	return NULL;
+}
+
+matrix df3(double t, matrix Y, matrix ud1, matrix ud2)
+{
+	//Y(0) = V0x
+	//Y(1) = V0y
+	//Y(2) = x0
+	//Y(3) = y0
+	//ud2(0) = omega
+
+	//Definicje zmiennych
+	double g = 9.81; //g [m/s]
+	double m = 0.6; //masa 0.6 [kg]
+	double r = 0.12; // promien 0.12 [m]
+	double ro = 1.2; //gestosc powietrza [kg/m3]
+	double C = 0.47; // Wspolczynnik oporu kuli
+
+	double S = M_PI * pow(r,2); //Przekruj kuli [m2]
+
+	//Sily oporu powietrza
+	double Dx = 0.5 * C * ro * S * Y(0) * abs(Y(0));
+	double Dy = 0.5 * C * ro * S * Y(1) * abs(Y(1));
+
+	//sila Magnusa
+	double FMx = ro * Y(1) * m2d(ud2(0)) * M_PI * pow(r, 3);
+	double FMy = ro * Y(0) * m2d(ud2(0)) * M_PI * pow(r, 3);
+
+	//wektor rozniczki
+	matrix dY(4,1);
+
+	dY(0) = Y(2);					//x0
+	dY(1) = Y(3);					//y0
+
+	dY(2) = (-Dx -FMx)/m;			//ax
+	dY(3) = (-Dy - FMy - m*g)/m;	//ay
+	return dY;
+}
