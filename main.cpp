@@ -17,13 +17,13 @@ void lab2();
 void lab3();
 void lab4();
 void lab5();
-void lab6();
+void lab6(); 
 
 int main()
 {
 	try
 	{
-		lab1();
+		lab3();
 	}
 	catch (string EX_INFO)
 	{
@@ -166,13 +166,157 @@ void lab1()
 	lagrangeToFile.close();
 }
 
+
 void lab2()
 {
+
+	double s = 0.1; // dl kroku HJ
+	matrix s0(2, 1, s);
+	double alphaHJ = 0.5; //alpha HJ
+	double epsilon = 0.000001; //dokladnosc wyniku -> HJ.y < eps;
+	double Nmax = 10000; //Max wykonan
+	double alphaR = 1.13;
+	double beta = 0.5;
+	matrix x(2, 1);
+	matrix wynik_test_HJ(100,4);
+	//Generowanie ziarno
+	srand(time(NULL));
+
+	//Plik csv
+	ofstream testfunkc("testfunc.csv");
+	if (!testfunkc.is_open())throw string("PLIK CSV NIE OTWARTY");
+
+	// Nagłówki w pliku CSV
+	testfunkc << "Dl korku,Lp.,x1(0),x2(0),"
+		<< "HJ_x1,HJ_x2,y,Liczba wywolan funkcji celu,Minimum globalne,"
+		<< "R_x1,R_x2,y,Liczba wywolan funkcji celu,Minimum globalne\n";
+
+	//100 optymalizacji:
+	//for (int i = 0; i < 100; i++) {
+	//	//generowanie punktow startowych <-1,1>
+	//	x(0) = (((double)rand() / RAND_MAX) * 2) - 1;
+	//	x(1) = (((double)rand() / RAND_MAX) * 2) - 1;
+
+	//	//cout << "HJ-test start" << endl;
+	//	//cout << "x1: " << x(0) << "\nx2: " << x(1) << endl;
+	//	solution HJ_test = HJ(ff2T, x, s, alphaHJ, epsilon, Nmax);
+	//	//cout << "HJ test done" << endl;
+
+	//	//sprawdzenie czy globalne czy lokalne
+	//	string HJ_czy = (HJ_test.x(0) < 0.1 && HJ_test.x(0) > -0.1 && HJ_test.x(1) < 0.1 && HJ_test.x(1) > -0.1) ? "TAK" : "NIE" ; 		// Określenie, czy minimum jest lokalne czy globalne
+
+	//	//cout << "Osiagnieta f(x1,x2): " << HJ_test.y << "\n";
+	//	//cout << " x1 = " << HJ_test.x(0)
+	//	//	<< " x2 = " << HJ_test.x(1) << "\n";
+	//	//cout << "Minimum " << HJ_czy << endl;
+
+	//	testfunkc << s << "," << i + 1 << "," << x(0) << "," << x(1) << ","
+	//		<< HJ_test.x(0) << "," << HJ_test.x(1) << "," << HJ_test.y(0) << ","<< solution::f_calls << "," << HJ_czy << "\n";
+	//	solution::clear_calls();
+	//}
+	
+	
+
+	for (int i = 0; i < 100; i++) {
+		//generowanie punktow startowych <-1,1>
+		x(0) = (((double)rand() / RAND_MAX) * 2) - 1;
+		x(1) = (((double)rand() / RAND_MAX) * 2) - 1;
+
+		//cout << "R-test start" << endl;
+		//cout << "x1: " << x(0) << "\nx2: " << x(1) << endl;
+		solution R_test = Rosen(ff2T, x,s0, alphaR, beta, epsilon, Nmax);
+		//cout << "R test done" << endl;
+
+		//sprawdzenie czy globalne czy lokalne
+		string R_czy = (R_test.x(0) < 0.1 && R_test.x(0) > -0.1 && R_test.x(1) < 0.1 && R_test.x(1) > -0.1) ? "TAK" : "NIE"; 		// Określenie, czy minimum jest lokalne czy globalne
+
+		/*	cout << "Osiagnieta f(x1,x2): " << HJ_test.y << "\n";
+			cout << " x1 = " << HJ_test.x(0)
+				<< " x2 = " << HJ_test.x(1) << "\n";
+			cout << "Minimum " << HJ_czy << endl;*/
+		cout << R_test << endl;
+
+		testfunkc << s << "," << i + 1 << "," << x(0) << "," << x(1) << ","
+			<< R_test.x(0) << "," << R_test.x(1) << "," << R_test.y(0) << "," << solution::f_calls << "," << R_czy << "\n";
+
+	}
+
+	testfunkc.close();
 
 }
 
 void lab3()
 {
+	matrix x0 = matrix(2, 1);
+	srand(time(NULL));
+
+	//Plik csv
+	ofstream testfunkc("testfunc.csv");
+	if (!testfunkc.is_open())throw string("PLIK CSV NIE OTWARTY");
+
+	// Nagłówki w pliku CSV
+	testfunkc << "Parametr a,Lp.,x1(0),x2(0),"
+		<< "ZE_x1,ZE_x2,r,y,Liczba wywolan funkcji celu,"
+		<< "WE_x1,WE_x2,r,y,Liczba wywolan funkcji celu\n";
+
+
+	//Inicjalizacja metody Neldera-Meada
+	//double s = 0.5; //dlugosc synopsu
+	//double alpha = 1.0; //wspolczynnik odbicia
+	//double beta = 0.5; //zawezenie <1
+	//double gamma = 2.0; // ekspansjia >1
+	//double delta = 0.5; //redukcja <1
+	const double epsilon = 1e-3; //dokladnosc
+	const int Nmax = 100000; // liczba wywolan
+
+	//Inicjal funkcji kary
+	matrix parametr_a[3] = {4.0, 4.4934, 5.0}; //wysylany do ud1
+	solution wynik_zewn, wynik_wewn;
+	int wybrany = 0;
+	double c = 2.0;
+
+	//100 optymalizacji:
+	//for (int i = 0; i < 100; i++) {
+	//	//break;
+	//	do // g(x1, x2) <= a
+	//	{
+	//		x0(0) = (((double)rand() / RAND_MAX) * 5) + 1;
+	//		x0(1) = (((double)rand() / RAND_MAX) * 5) + 1;
+
+	//	} while (norm(x0) > parametr_a[wybrany]);
+
+	//	cout << "Wylosowane pkt startowe:\n";
+	//	cout << x0 << endl;
+	//	
+	//	wynik_zewn = pen(ff3T, x0, c, 2, epsilon, Nmax, parametr_a[wybrany]);
+	//	cout << wynik_zewn;
+
+	//	testfunkc << m2d(parametr_a[wybrany]) << "," << i + 1 << "," << x0(0) << "," << x0(1) << ","
+	//		<< wynik_zewn.x(0) << "," << wynik_zewn.x(1) << "," << norm(wynik_zewn.x) << "," << wynik_zewn.y(0) << "," << solution::f_calls << ",";// << "\n";
+	//	solution::clear_calls();
+
+	//	wynik_wewn = pen(ff3T, x0, c, 0.5, epsilon, Nmax, parametr_a[wybrany]);
+	//	testfunkc	<< wynik_wewn.x(0) << "," << wynik_wewn.x(1) << "," << norm(wynik_wewn.x) << "," << wynik_wewn.y(0) << "," << solution::f_calls << "," << "\n";
+	//	solution::clear_calls();
+	//}
+	//testfunkc.close();
+
+	//matrix rozniczka = df3();
+	//cout << "wynik rozniczki\n";
+
+	//FUNKCJA RZECZYWISTA:
+	solution::clear_calls();
+	x0(0) = 3;		//V0x 
+	x0(1) = 1.5;	//Omega [rad/s]
+	solution wynik_real = pen(ff3R, x0, c, 2, epsilon, Nmax);
+	cout << wynik_real;
+	ofstream real("real.csv");
+	real << wynik_real;
+
+	//RECZYWISTE INFO
+	//omega w = 41
+	//t = 59.6s -> y ~= 0
+	//y = 50m -> x e<4.5, 5.5>
 
 }
 
