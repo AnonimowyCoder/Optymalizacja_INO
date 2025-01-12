@@ -1,10 +1,10 @@
-/*********************************************
-Kod stanowi uzupe³nienie materia³ów do æwiczeñ
+ï»¿/*********************************************
+Kod stanowi uzupeï¿½nienie materiaï¿½ï¿½w do ï¿½wiczeï¿½
 w ramach przedmiotu metody optymalizacji.
-Kod udostêpniony na licencji CC BY-SA 3.0
-Autor: dr in¿. £ukasz Sztangret
+Kod udostï¿½pniony na licencji CC BY-SA 3.0
+Autor: dr inï¿½. ï¿½ukasz Sztangret
 Katedra Informatyki Stosowanej i Modelowania
-Akademia Górniczo-Hutnicza
+Akademia Gï¿½rniczo-Hutnicza
 Data ostatniej modyfikacji: 19.09.2023
 *********************************************/
 
@@ -22,7 +22,7 @@ int main()
 {
 	try
 	{
-		lab4();
+		lab5();
 	}
 	catch (string EX_INFO)
 	{
@@ -57,7 +57,7 @@ void lab0()
 	solution::clear_calls();
 
 	//Zapis symulacji do pliku csv
-	matrix Y0 = matrix(2, 1), MT = matrix(2, new double[2]{ m2d(opt.x),0.5 });
+	matrix Y0 = matrix(2, 1), MT = matrix(2, new double[2] { m2d(opt.x), 0.5 });
 	matrix* Y = solve_ode(df0, 0, 0.1, 10, Y0, NAN, MT);
 	ofstream Sout("symulacja_lab0.csv");
 	Sout << hcat(Y[0], Y[1]);
@@ -97,7 +97,7 @@ void lab3()
 	ofstream testfunkc("testfunc.csv");
 	if (!testfunkc.is_open())throw string("PLIK CSV NIE OTWARTY");
 
-	// Nag³ówki w pliku CSV
+	// Nagï¿½ï¿½wki w pliku CSV
 	testfunkc << "Parametr a,Lp.,x1(0),x2(0),"
 		<< "ZE_x1,ZE_x2,r,y,Liczba wywolan funkcji celu,"
 		<< "WE_x1,WE_x2,r,y,Liczba wywolan funkcji celu\n";
@@ -158,14 +158,14 @@ void lab4()
 {
 	double tab_test[] = { 10.0,7.0 };
 	//punkt startowy 
-	matrix x0 = matrix(2,tab_test);
+	matrix x0 = matrix(2, tab_test);
 
 	const double step = 0.1;
 	const double epsilon = 1e-4; //dokladnosc
 	const int Nmax = 10000; // liczba wywolan
 
 	solution test;
-	test = Newton(ff4T, gf4T, hf4T,x0, step, epsilon, Nmax);
+	test = SD(ff4T, gf4T, x0,-1, epsilon, Nmax);
 	cout << "##################################" << endl;
 	cout << "Wyniki: " << endl;
 	cout << test.x << endl;
@@ -174,6 +174,27 @@ void lab4()
 
 void lab5()
 {
+	double tab_test[] = { 2.0,1.0 };
+	matrix x0 = matrix(2, tab_test);
+	//ustawienie macierzy parametrÃ³w
+	matrix ud1(2,1,0.0);
+	ud1.set_row(1.0, 0);
+	ud1.set_row(0.5, 1);
+	
+	const double epsilon = 1e-4; //dokladnosc
+	const int Nmax = 10000; // liczba wywolan
+
+	solution test;
+	test = Powell(ff5T_comb, x0, epsilon, Nmax,ud1);
+	//test = Powell(ff4T, x0, epsilon, Nmax, ud1);
+	//test = Powell(trivial, x0, epsilon, Nmax, ud1);
+
+	cout << "##################################" << endl;
+	cout << "Wyniki: " << endl;
+	cout << test.x << endl;
+	cout << test.y;
+
+
 
 }
 

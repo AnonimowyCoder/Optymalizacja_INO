@@ -11,7 +11,7 @@ matrix ff0T(matrix x, matrix ud1, matrix ud2)
 matrix ff0R(matrix x, matrix ud1, matrix ud2)
 {
 	matrix y;
-	matrix Y0 = matrix(2, 1), MT = matrix(2, new double[2]{ m2d(x),0.5 });
+	matrix Y0 = matrix(2, 1), MT = matrix(2, new double[2] { m2d(x), 0.5 });
 	matrix* Y = solve_ode(df0, 0, 0.1, 10, Y0, ud1, MT);
 	int n = get_len(Y[0]);
 	double teta_max = Y[1](0, 0);
@@ -28,9 +28,9 @@ matrix df0(double t, matrix Y, matrix ud1, matrix ud2)
 {
 	matrix dY(2, 1);
 	double m = 1, l = 0.5, b = 0.5, g = 9.81;
-	double I = m*pow(l, 2);
+	double I = m * pow(l, 2);
 	dY(0) = Y(1);
-	dY(1) = ((t <= ud2(1))*ud2(0) - m*g*l*sin(Y(0)) - b*Y(1)) / I;
+	dY(1) = ((t <= ud2(1)) * ud2(0) - m * g * l * sin(Y(0)) - b * Y(1)) / I;
 	return dY;
 }
 matrix ff2T(matrix x, matrix ud1, matrix ud2) {
@@ -176,16 +176,14 @@ matrix ff3R(matrix x, matrix ud1, matrix ud2) {
 
 matrix ff4T(matrix x, matrix ud1, matrix ud2) {
 	matrix y;
-	if (isnan(ud2(0, 0))) {	//jeśli wyznaczamy po prostu wartość funkcji dwuwymiarowej
 
-		y = pow((x(0) + 2 * x(1) - 7), 2) + pow((2 * x(0) + x(1) - 5), 2);
-		
-	}
-	else {		//jeśli wyznaczamy wartość funkcji w jakimś kierunku
-		y = ff4T(ud2[0] + x * ud2[1],0,ud1);
-	}
+	if (isnan(ud2(0, 0)))
+		y = pow(x(0) + 2 * x(1) - 7, 2) + pow(2 * x(0) + x(1) - 5, 2);
+	else
+		y = ff4T(ud2[0] + x * ud2[1], 0, NAN);
 	return y;
 }
+
 matrix gf4T(matrix x, matrix ud1, matrix ud2) {
 	matrix g(2, 1);
 	g(0) = -34 + 10 * x(0) + 8 * x(1);
@@ -198,4 +196,56 @@ matrix hf4T(matrix x, matrix ud1, matrix ud2) {
 	h(0, 0) = 10; h(0, 1) = 8;
 	h(1, 0) = 8;  h(1, 1) = 10;
 	return h;
+}
+
+//ud1 ma strukture:
+//ud1(0,0) = a
+//ud1(1,0) = w
+
+
+//ud1 = a
+matrix ff5T_1(matrix x, matrix ud1, matrix ud2) {
+	matrix y;
+	double a = ud1(0,0); //przypisanie wartosci a
+	y = a * (pow(x(0) - 2, 2) + pow(x(1) - 2, 2));
+	//cout << "y1 = " << y << endl;
+	return y;
+}
+//ud1 = a
+matrix ff5T_2(matrix x, matrix ud1, matrix ud2) {
+	matrix y;
+	double a = ud1(0,0); //przypisanie wartosci a
+	y = (1/a) * (pow(x(0) + 2, 2) + pow(x(1) + 2, 2));
+	//cout << "y2 = " << y << endl;
+
+	return y;
+}
+
+//zamiana problemu wielokryterialnego na jednokryterialny
+// 
+//ud1(1,0) = w
+//ud1(0,0) = a;		ud2 = wyznaczanie minimum po kierunku
+matrix ff5T_comb(matrix x, matrix ud1, matrix ud2) {
+	double w = ud1(1, 0);
+	matrix y;
+	if (isnan(ud2(0, 0))) {	//jeśli wyznaczamy po prostu wartość funkcji dwuwymiarowej
+		//cout << "Wyznaczam wartosc funkcji w ogolnie" << endl;
+
+		y = w * ff5T_1(x, ud1, ud2) + (1 - w) * ff5T_2(x, ud1, ud2);
+	}
+	else {		//jeśli wyznaczamy wartość funkcji w jakimś kierunku
+		//cout << "Wyznaczam wartosc funkcji w kierunku" << endl;
+		y = ff5T_comb(ud2[0] + x * ud2[1], ud1, NAN);
+	}
+	//cout << "zwracana wartosc y_comb to: " << y << endl;
+	return y;
+}
+matrix trivial(matrix x, matrix ud1, matrix ud2) {
+	matrix y;
+
+	if (isnan(ud2(0, 0)))
+		y = pow(x(0), 2) + pow(x(1), 2);
+	else
+		y = trivial(ud2[0] + x * ud2[1], 0, NAN);
+	return y;
 }

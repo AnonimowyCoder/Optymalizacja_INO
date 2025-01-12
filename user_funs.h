@@ -15,3 +15,8 @@ matrix ff4T(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
 matrix gf4T(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
 matrix hf4T(matrix x, matrix ud1, matrix ud2);
 
+matrix ff5T_1(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
+matrix ff5T_2(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
+
+matrix ff5T_comb(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
+matrix trivial(matrix x, matrix ud1=NAN, matrix ud2=NAN);

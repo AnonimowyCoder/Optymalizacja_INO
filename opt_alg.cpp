@@ -1,4 +1,4 @@
-#include"opt_alg.h"
+ï»¿#include"opt_alg.h"
 
 solution MC(matrix(*ff)(matrix, matrix, matrix), int N, matrix lb, matrix ub, double epsilon, int Nmax, matrix ud1, matrix ud2)
 {
@@ -31,32 +31,70 @@ solution MC(matrix(*ff)(matrix, matrix, matrix), int N, matrix lb, matrix ub, do
 }
 
 // lab 1
-double* expansion(matrix(*ff)(matrix, matrix, matrix), double x0, double d, double alpha, int Nmax, matrix ud1, matrix ud2)
+double* expansion(matrix(*ff)(matrix, matrix, matrix), double _x0, double d, double alpha, int Nmax, matrix ud1, matrix ud2)
 {
 	try
 	{
 		double* p = new double[2] { 0, 0 };
-		solution X0(x0), X1(x0 + d);
-		X0.fit_fun(ff, ud1, ud2);
-		X1.fit_fun(ff, ud1, ud2);
-		if (X0.y == X1.y) {
-			p[0] = m2d(X0.x);
-			p[1] = m2d(X1.x);
+		solution x0(_x0);
+		solution x1(_x0 + d);
+
+		std::vector<solution> x_val;
+		x_val.push_back(x0.x);
+		x_val.push_back(x1.x);
+
+		x_val[0].fit_fun(ff, ud1, ud2);
+		x_val[1].fit_fun(ff, ud1, ud2);
+
+		if (x_val[1].y(0) == x_val[0].y(0))
+		{
+			p[0] = x_val[0].x(0); p[1] = x_val[1].x(0);
 			return p;
 		}
-		if (X1.y > X0.y) {
+		if (x_val[1].y(0) > x_val[0].y(0))
+		{
 			d = -d;
-			X1.x = X0.x + d;
-			X1.fit_fun(ff, ud1, ud2);
-			if (X1.y >= X0.y) {
-				p[0] = m2d(X1.x);
-				p[1] = m2d(X0.x - d);
+			x_val[1].x = _x0 + d;
+
+			x_val[1].fit_fun(ff, ud1, ud2);
+			if (x_val[1].y(0) >= x_val[0].y(0))
+			{
+				p[0] = x_val[1].x(0); p[1] = x_val[0].x(0) - d;
 				return p;
 			}
 		}
 
-		return p;
+		int i = 0;
 
+		while (true)
+		{
+			if (solution::f_calls > Nmax)
+			{
+				delete[] p;
+				return NULL;
+			}
+
+			i++;
+
+			x_val.push_back(_x0 + pow(alpha, i) * d);
+			x_val[i + 1].fit_fun(ff, ud1, ud2);
+			if (x_val[i].y(0) <= x_val[i + 1].y(0))
+			{
+				break;
+			}
+		}
+
+
+		if (d > 0)
+		{
+			p[0] = x_val[i - 1].x(0); p[1] = x_val[i + 1].x(0);
+			return p;
+		}
+		else
+		{
+			p[0] = x_val[i + 1].x(0); p[1] = x_val[i - 1].x(0);
+			return p;
+		}
 	}
 	catch (string ex_info)
 	{
@@ -98,10 +136,10 @@ solution lag(matrix(*ff)(matrix, matrix, matrix), double a, double b, double eps
 ///////////////////////////////
 // ff -> fit function (funkcja celu)
 // x0 -> punkt startowy
-// s -> pocz¹tkowa d³ugoœæ kroku
-// alpha -> wspó³czynnik zmniejszenia kroku
-// epsilon -> dok³adnoœæ
-// Nmax -> maksymalna liczba wywo³añ funkcji celu
+// s -> poczï¿½tkowa dï¿½ugoï¿½ï¿½ kroku
+// alpha -> wspï¿½czynnik zmniejszenia kroku
+// epsilon -> dokï¿½adnoï¿½ï¿½
+// Nmax -> maksymalna liczba wywoï¿½aï¿½ funkcji celu
 solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alpha, double epsilon, int Nmax, matrix ud1, matrix ud2)
 {
 	try
@@ -113,7 +151,7 @@ solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alp
 			XB = Xopt;
 			// etap roboczy
 			Xopt = HJ_trial(ff, XB, s, ud1, ud2);
-			cout <<"przed fit fun, po HJ_trial"<<endl << "Xopt y = " << Xopt.y << endl;
+			cout << "przed fit fun, po HJ_trial" << endl << "Xopt y = " << Xopt.y << endl;
 			XB.fit_fun(ff);
 			Xopt.fit_fun(ff);
 			cout << "przed if, po fit fun " << endl << "Xopt y = " << Xopt.y << endl;
@@ -130,7 +168,7 @@ solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alp
 			}
 			else
 				s = alpha * s;
-		} while (s > epsilon&&Nmax>Xopt.f_calls);
+		} while (s > epsilon && Nmax > Xopt.f_calls);
 		return Xopt;
 	}
 	catch (string ex_info)
@@ -141,8 +179,8 @@ solution HJ(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double alp
 
 
 // ff -> fit function (funkcja celu)
-// XB -> aktualna wartoœæ x
-// s -> d³ugoœæ kroku
+// XB -> aktualna wartoï¿½ï¿½ x
+// s -> dï¿½ugoï¿½ï¿½ kroku
 solution HJ_trial(matrix(*ff)(matrix, matrix, matrix), solution XB, double s, matrix ud1, matrix ud2)
 {
 	try
@@ -152,27 +190,27 @@ solution HJ_trial(matrix(*ff)(matrix, matrix, matrix), solution XB, double s, ma
 
 		for (int j = 0; j < dim; j++) {
 			// utworzenie wersora
-			matrix e_j(dim, 1,0.0);
+			matrix e_j(dim, 1, 0.0);
 			cout << "tu dziala, iteracja nr: " << j << endl;
 			e_j.set_row(1.0, j);
-			cout << "XB.x: "<<endl << XB.x << endl;
-			cout << "e_j: " <<endl<< e_j << endl;
+			cout << "XB.x: " << endl << XB.x << endl;
+			cout << "e_j: " << endl << e_j << endl;
 
 			//utworzenie dodatkowych solution
 			solution XB_plus(XB);
 			solution XB_minus(XB);
 
-			//wyliczenie bazowego po³o¿enia x
+			//wyliczenie bazowego poï¿½oï¿½enia x
 			XB.fit_fun(ff);
 
-			//wyliczenie nowego po³o¿enia x
+			//wyliczenie nowego poï¿½oï¿½enia x
 			XB_plus.x = XB.x + (e_j * s);
 			cout << "Po operacji dodania wersora, XB_plus.x: " << endl << XB_plus.x << endl;
 			XB_plus.fit_fun(ff);
 
 			XB_minus.x = XB.x - (e_j * s);
 			XB_minus.fit_fun(ff);
-		
+
 			//poprawa w kierunku e_j
 			if (XB_plus.y < XB.y) {
 				cout << "blok if (XB_plus.y < XB.y)" << endl;
@@ -180,7 +218,7 @@ solution HJ_trial(matrix(*ff)(matrix, matrix, matrix), solution XB, double s, ma
 			}
 			//poprawa w kierunku -e_j
 			else {
-				
+
 				if (XB_minus.y < XB.y) {
 					cout << "blok if (XB_minus.y < XB.y)" << endl;
 					XB.x = XB.x - (e_j * s);
@@ -254,12 +292,12 @@ solution sym_NM(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double
 		matrix jednostkowa = ident_mat(n);
 		solution* p = new solution[n + 1];
 		p[0].x = x0;
-		p[0].fit_fun(ff, ud1, ud2); // Obliczenie wartoœci funkcji celu dla punktu pocz¹tkowego 
+		p[0].fit_fun(ff, ud1, ud2); // Obliczenie wartoï¿½ci funkcji celu dla punktu poczï¿½tkowego 
 
-		//Obliczenie funkcji celu dla pozosta³ych punktów podczas inicjalizacji
+		//Obliczenie funkcji celu dla pozostaï¿½ych punktï¿½w podczas inicjalizacji
 		for (int i = 1; i < n + 1; ++i) {
 			p[i].x = p[0].x + s * jednostkowa[i - 1];  // Macierz jednostkowa [i-1]
-			p[i].fit_fun(ff, ud1, ud2);  // Obliczenie funkcji celu dla ka¿dego wierzcho³ka
+			p[i].fit_fun(ff, ud1, ud2);  // Obliczenie funkcji celu dla kaï¿½dego wierzchoï¿½ka
 		}
 
 		solution p_odb, p_z, p_e;
@@ -268,7 +306,7 @@ solution sym_NM(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double
 		while (true) {
 			max = min = 0;
 
-			//Porównanie funkcji celu
+			//Porï¿½wnanie funkcji celu
 			for (int i = 1; i < n + 1; ++i) {
 				if (p[i].y < p[min].y)
 					min = i;
@@ -323,7 +361,7 @@ solution sym_NM(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double
 				throw string("Liczba wywolan przekracza Nmax");
 
 			}
-			// Kryterium zakoñczenia
+			// Kryterium zakoï¿½czenia
 			double max_dist = norm(p[min].x - p[0].x);
 			for (int i = 1; i < n + 1; ++i) {
 				double dist = norm(p[min].x - p[i].x);
@@ -346,8 +384,8 @@ solution sym_NM(matrix(*ff)(matrix, matrix, matrix), matrix x0, double s, double
 
 //Lab_4 
 ///////////////////////////
-// dla h0 = -1 mamy zmiennokrokow¹ metodê
-// wykorzystuje metodê ekspancji i z³otego podzia³u (golden)
+// dla h0 = -1 mamy zmiennokrokowa metode
+// wykorzystuje metode ekspancji i zlotego podzialu (golden)
 solution SD(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix, matrix), matrix x0, double h0, double epsilon, int Nmax, matrix ud1, matrix ud2)
 {
 	try
@@ -356,9 +394,9 @@ solution SD(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix, mat
 		int wym = get_len(x0);	//wymiar problemu
 		solution X_0(x0), X_i, gold;
 		double* zakres;
-		matrix ud_min(wym, 2); //macierz do poszukiwañ w jednym wymiarze
+		matrix ud_min(wym, 2); //macierz do poszukiwan w jednym wymiarze
 		do {
-			X_0.grad(gf,ud1,ud2); //obliczenie gradientu
+			X_0.grad(gf, ud1, ud2); //obliczenie gradientu
 			cout << "wartosc X_0.g = " << X_0.g << endl << endl << endl;
 
 			if (h0 == -1) {		//przypadek zmiennokrokowy
@@ -368,24 +406,24 @@ solution SD(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix, mat
 				zakres = expansion(ff, 0, 1, 1.2, Nmax, ud1, ud_min);	//wyznaczenie zakresu dla metody golden
 				cout << "Wyznaczony zakres to: " << zakres[0] << ",  " << zakres[1] << endl;
 				gold = golden(ff, zakres[0], zakres[1], epsilon, Nmax, ud1, ud_min);
-				cout << "wartosc kroku gold.x = " << gold.x << endl<<endl;
-				
-				X_i.x = X_0.x - gold.x * X_0.g;			//wyznaczenie kolejnego po³o¿enia x
+				cout << "wartosc kroku gold.x = " << gold.x << endl << endl;
+
+				X_i.x = X_0.x - gold.x * X_0.g;			//wyznaczenie kolejnego polozenia x
 			}
-			else 	//przypadek sta³okrokowy
-				X_i.x = X_0.x - h0 * X_0.g;	//wyliczanie kolejnego po³o¿enia x
-			
+			else 	//przypadek stalokrokowy
+				X_i.x = X_0.x - h0 * X_0.g;	//wyliczanie kolejnego polozenia x
+
 			i++;
 
 			if (norm(X_i.x - X_0.x) < epsilon) {
-				X_i.fit_fun(ff,ud1,ud2);
+				X_i.fit_fun(ff, ud1, ud2);
 				return X_i;
 			}
 
 			X_0.x = X_i.x;
 
 		} while (i < Nmax);
-	
+
 	}
 	catch (string ex_info)
 	{
@@ -402,8 +440,8 @@ solution CG(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix, mat
 		int wym = get_len(x0);	//wymiar problemu
 		solution X_0(x0), X_i, gold;
 		double* zakres;
-		matrix ud_min(wym, 2); //macierz do poszukiwañ w jednym wymiarze
-		matrix step_0(2, 1); //zmienna przechowuj¹ca kierunek kroku
+		matrix ud_min(wym, 2); //macierz do poszukiwaï¿½ w jednym wymiarze
+		matrix step_0(2, 1); //zmienna przechowujï¿½ca kierunek kroku
 		step_0 = -X_0.grad(gf, ud1, ud2); //obliczenie gradientu
 
 		do {
@@ -417,10 +455,10 @@ solution CG(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix, mat
 				gold = golden(ff, zakres[0], zakres[1], epsilon, Nmax, ud1, ud_min);
 				cout << "wartosc kroku gold.x = " << gold.x << endl << endl;
 
-				X_i.x = X_0.x + gold.x * step_0;			//wyznaczenie kolejnego po³o¿enia x
+				X_i.x = X_0.x + gold.x * step_0;			//wyznaczenie kolejnego poï¿½oï¿½enia x
 			}
-			else 	//przypadek sta³okrokowy
-				X_i.x = X_0.x + h0 * step_0;	//wyliczanie kolejnego po³o¿enia x
+			else 	//przypadek staï¿½okrokowy
+				X_i.x = X_0.x + h0 * step_0;	//wyliczanie kolejnego poï¿½oï¿½enia x
 
 			i++;
 
@@ -456,7 +494,7 @@ solution Newton(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix,
 		int wym = get_len(x0);	//wymiar problemu
 		solution X_0(x0), X_i, gold;
 		double* zakres;
-		matrix ud_min(wym, 2); //macierz do poszukiwañ w jednym wymiarze
+		matrix ud_min(wym, 2); //macierz do poszukiwaï¿½ w jednym wymiarze
 		matrix step(2, 1);
 		do {
 			step = -inv(X_0.hess(Hf, ud1, ud2)) * X_0.grad(gf, ud1, ud2);
@@ -468,10 +506,10 @@ solution Newton(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix,
 				zakres = expansion(ff, 0, 1, 1.2, Nmax, ud1, ud_min);	//wyznaczenie zakresu dla metody golden
 				gold = golden(ff, zakres[0], zakres[1], epsilon, Nmax, ud1, ud_min);
 				cout << "wartosc kroku gold.x = " << gold.x << endl << endl;
-				X_i.x = X_0.x - gold.x * X_0.g;			//wyznaczenie kolejnego po³o¿enia x
+				X_i.x = X_0.x - gold.x * X_0.g;			//wyznaczenie kolejnego poï¿½oï¿½enia x
 			}
-			else 	//przypadek sta³okrokowy
-				X_i.x = X_0.x + h0 * step;	//wyliczanie kolejnego po³o¿enia x
+			else 	//przypadek staï¿½okrokowy
+				X_i.x = X_0.x + h0 * step;	//wyliczanie kolejnego poï¿½oï¿½enia x
 
 			i++;
 
@@ -493,47 +531,44 @@ solution Newton(matrix(*ff)(matrix, matrix, matrix), matrix(*gf)(matrix, matrix,
 
 
 // a, b - poczatkowy przedzial poszukiwan
-// epsilon - dok³adnoœæ obliczeñ
+// epsilon - dokï¿½adnoï¿½ï¿½ obliczeï¿½
 
 solution golden(matrix(*ff)(matrix, matrix, matrix), double a, double b, double epsilon, int Nmax, matrix ud1, matrix ud2)
 {
 	try
 	{
-		solution Xopt;
-		int i = 0;
+		//solution Xopt;
 		double alfa = (sqrt(5) - 1) / 2;
-		solution a_sol(a);
-		solution b_sol(b);
-		solution c_sol(b - alfa * (b - a));
-		solution d_sol(a + alfa * (b - a));
-		c_sol.fit_fun(ff, ud1, ud2);
-		d_sol.fit_fun(ff, ud1, ud2);
+		solution A, B, C, D;
+		A.x = a;
+		B.x = b;
+		C.x = B.x - alfa * (B.x - A.x);
+		C.fit_fun(ff, ud1, ud2);
+		D.x = A.x + alfa * (B.x - A.x);
+		D.fit_fun(ff, ud1, ud2);
 
-		while ((b_sol.x - a_sol.x) > epsilon && i < Nmax) {
-			if (c_sol.y < d_sol.y) {
-				b_sol.x = d_sol.x;
-				d_sol.x = c_sol.x;
-				c_sol.x = b_sol.x - alfa * (b_sol.x - a_sol.x);
-				c_sol.fit_fun(ff, ud1, ud2);
-				d_sol.fit_fun(ff, ud1, ud2);
+		while (true) {
+			if (C.y < D.y) {
+				B = D;
+				D = C;
+				C.x = B.x - alfa * (B.x - A.x);
+				C.fit_fun(ff, ud1, ud2);
 			}
 			else {
-				a_sol.x = c_sol.x;
-				c_sol.x = d_sol.x;
-				d_sol.x = a_sol.x + alfa * (b_sol.x - a_sol.x);
-				c_sol.fit_fun(ff, ud1, ud2);
-				d_sol.fit_fun(ff, ud1, ud2);
+				A = C;
+				C = D;
+				D.x = A.x + alfa * (B.x - A.x);
+				D.fit_fun(ff, ud1, ud2);
 			}
-			i++;
+			if (B.x - A.x < epsilon || solution::f_calls > Nmax) {
+				A.x = (A.x + B.x) / 2;
+				A.fit_fun(ff, ud1, ud2);
+				A.flag = 0;
+				return A;
+			}
 		}
 
-		if (i >= Nmax) {
-			throw string("Przekroczono maksymaln¹ liczbê iteracji Nmax");
-		}
-		Xopt.x = (a_sol.x + b_sol.x) / 2.0;
-		Xopt.fit_fun(ff, ud1, ud2);
-
-		return Xopt;
+		//return Xopt;
 	}
 	catch (string ex_info)
 	{
@@ -545,8 +580,82 @@ solution Powell(matrix(*ff)(matrix, matrix, matrix), matrix x0, double epsilon, 
 {
 	try
 	{
+		const int n_wym = 2;
 		solution Xopt;
-		//Tu wpisz kod funkcji
+		int i = 0;
+
+		//narzÄ™dzia do poszukiwaÅ„ w jednym wymiarze
+		double* zakres;		//zakres znaleziony metodÄ… ekspansji
+		matrix ud_min(n_wym, 2); //macierz do poszukiwan w jednym wymiarze
+		solution gold;		//rozwiÄ…zanie optymalne na kierunku (dÅ‚ugoÅ›Ä‡ kroku)
+
+		//utworzenie wersorÃ³w
+		matrix tab_dj[n_wym];
+		// j=0; j=1
+		for (int j = 0; j < n_wym; j++) {
+			matrix e_j(n_wym, 1, 0.0);
+			e_j.set_row(1.0, j);
+			tab_dj[j] = e_j;
+			//cout << "utworzone wersor nr " << j << ":  " << tab_dj[j]<<endl;
+		}
+
+		// punkty pomocnicze w tablicy
+		matrix tab_p[4];	//n_wym+2
+		for (int j = 0; j < 4; j++) {
+			matrix p(n_wym, 1, 0.0);
+			tab_p[j] = p;
+		}
+
+		//glowna petla 
+		solution X(x0);
+		do {
+			tab_p[0] = X.x;
+
+			for (int j = 1; j <= n_wym; j++) {
+				//optymalizacja po kiernku
+				//j=1, j=2
+				ud_min.set_col(X.x, 0);		//punkt poczÄ…tkowy
+				ud_min.set_col(tab_dj[j-1], 1);		//kierunek (wykorzystujemy wersory)
+				
+				cout << "(pierwsze)wyswietlam ud_min do obliczen po kierunku : " <<endl<< ud_min << endl;
+
+				zakres = expansion(ff, 0, 1, 1.2, Nmax, ud1, ud_min);	//wyznaczenie zakresu dla metody golden
+				cout << "(pierwsze)Wyznaczony zakres to: " << zakres[0] << ",  " << zakres[1] << endl;
+				gold = golden(ff, zakres[0], zakres[1], epsilon, Nmax, ud1, ud_min);
+				cout << "(pierwsze)wartosc kroku gold.x = " << gold.x << endl << endl;
+
+				//obliczenie punktu pj
+				tab_p[j] = tab_p[j - 1] + gold.x() * tab_dj[j - 1];
+				cout << "obliczony punkt p[j] = " << endl<<tab_p[j] << endl;
+			}
+			// sprawdzenie warunku zakoÅ„czenia
+			if (norm(tab_p[n_wym] - X.x) < epsilon) {
+				X.fit_fun(ff, ud1, ud2);
+				return X;
+			}
+
+			//wyznaczenie nowych kierunkÃ³w
+			tab_dj[0] = tab_dj[1];
+			
+			//wyznaczony nowy kierunk
+            tab_dj[1] = (tab_p[n_wym] - tab_p[0])* (1/ norm(tab_p[n_wym] - tab_p[0]));
+
+			//wyznaczenie nowej dÅ‚ugoÅ›Ä‡ kroku
+
+			ud_min.set_col(tab_p[n_wym], 0);		//punkt poczÄ…tkowy
+			ud_min.set_col(tab_dj[1], 1);		//nowy kierunek
+
+			cout << "(drugie)wyswietlam ud_min do obliczen po kierunku: " << endl << ud_min << endl;
+
+			zakres = expansion(ff, 0, 1, 1.2, Nmax, ud1, ud_min);	//wyznaczenie zakresu dla metody golden
+			cout << "(drugie)Wyznaczony zakres to: " << zakres[0] << ",  " << zakres[1] << endl;
+			gold = golden(ff, zakres[0], zakres[1], epsilon, Nmax, ud1, ud_min);
+			cout << "(drugie)wartosc kroku gold.x = " << gold.x << endl << endl;
+			tab_p[n_wym + 1] = tab_p[n_wym] + gold.x() * tab_dj[1];
+			X.x = tab_p[n_wym + 1];
+			cout <<endl<< "NOWY PUNKT X.x TO: " << endl << X.x << endl;
+			i++;
+		} while (X.f_calls<Nmax);
 
 		return Xopt;
 	}
