@@ -33,3 +33,8 @@ matrix ff5T_comb(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
 matrix trivial(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
 
 matrix ff5R(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
+
+//LAB 6
+matrix ff6T(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);
+matrix df6(double t, matrix Y, matrix ud1 =NAN, matrix ud2=NAN);
+matrix ff6R(matrix x, matrix ud1 = NAN, matrix ud2 = NAN);

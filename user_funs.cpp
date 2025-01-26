@@ -469,8 +469,6 @@ matrix ff5T_comb(matrix x, matrix ud1, matrix ud2) {
 }
 
 
-
-
 matrix ff5R(matrix x, matrix ud1, matrix ud2) {
 	// Stałe materiałowe i geometryczne
 	const double P = 1000.0;    // Siła [N]
@@ -541,4 +539,86 @@ matrix ff5R(matrix x, matrix ud1, matrix ud2) {
 	}
 
 	return y;
+}
+
+//WRONG FF5R
+//matrix ff5R(matrix x, matrix ud1, matrix ud2) {
+//	double force = 1000.0;      // Obciążenie 
+//	double youngModulus = 207e9; // Moduł Younga 
+//	double density = 7800.0;     // Gęstość materiału 
+//	double penalty = 1e10;       // kara
+//
+//	matrix result;
+//
+//	if (isnan(ud2(0, 0))) {
+//		//cout << "blok if" << endl;
+//		double length = x(0) * 1e-3; // m    
+//		double diameter = x(1) * 1e-3; // m
+//
+//		result = matrix(3, 1);
+//
+//		result(0) = density * (M_PI * pow(diameter, 2) / 4.0) * length;
+//
+//		result(1) = (64.0 * force * pow(length, 3)) /
+//			(3.0 * youngModulus * M_PI * pow(diameter, 4)) * 1e3;
+//
+//		result(2) = (32.0 * force * length) / (M_PI * pow(diameter, 3));
+//
+//		cout << "R0" << result(0) << ", " << "R1" << result(1) << ", " << "R2" << result(2) << endl;
+//	}
+//	else {
+//		//cout << "w bloku else" << endl;
+//		matrix x_penalty = ud2[0] + x * ud2[1];
+//		matrix y_penalty = ff5R(x_penalty, ud1);
+//
+//		result = ud1 * (y_penalty(0) - 0.12) / (15.3 - 0.12) +
+//			(1 - ud1) * (y_penalty(1) - 0.042) / (3.2 - 0.042);
+//
+//		//cout << result << endl;
+//
+//		if (x_penalty(0) < 200) result = result + penalty * pow(200 - x_penalty(0), 2);
+//		if (x_penalty(0) > 1000) result = result + penalty * pow(x_penalty(0) - 1000, 2);
+//		if (x_penalty(1) < 10) result = result + penalty * pow(10 - x_penalty(1), 2);
+//		if (x_penalty(1) > 50) result = result + penalty * pow(x_penalty(1) - 50, 2);
+//		if (y_penalty(1) > 5) result = result + penalty * pow(y_penalty(1) - 5, 2);
+//		if (y_penalty(2) > 300e6) result = result + penalty * pow(y_penalty(2) - 300e6, 2);
+//	}
+//
+//	return result;
+//
+//}
+
+// LAB 6 
+matrix ff6T(matrix x, matrix ud1, matrix ud2)
+{
+	double x1 = x(0);
+	double x2 = x(1);
+	return pow(x1, 2) + pow(x2, 2) - cos(2.5 * M_PI * x1) - cos(2.5 * M_PI * x2) + 2;
+}
+
+matrix ff6R(matrix x, matrix ud1, matrix ud2) {
+	matrix y,
+		Y0(4, 1),
+		* Y = solve_ode(df6, 0, 0.1, 100, Y0, ud1, x[0]);
+	for (int i = 0; i < ud1(0); i++)
+		y = y + abs(ud2(i, 0) - Y[1](i, 0)) + abs(ud2(i, 1) - Y[1](i, 2));
+	y(0) = y(0) / (2 * ud1(0));
+	return y;
+}
+
+matrix df6(double t, matrix Y, matrix ud1, matrix ud2) {
+	matrix dY(4, 1);
+	double m1 = 5,
+		m2 = 5,
+		k1 = 1,
+		k2 = 1,
+		F = 1.0,
+		b1 = ud2(0),
+		b2 = ud2(1);
+
+	dY(0) = Y(1);
+	dY(1) = (-b1 * Y(1) - b2 * (Y(1) - Y(3)) - k1 * Y(0) - k2 * (Y(0) - Y(2))) / m1;
+	dY(2) = Y(3);
+	dY(3) = (F + b2 * (Y(1) - Y(3)) + k2 * (Y(0) - Y(2))) / m2;
+	return dY;
 }

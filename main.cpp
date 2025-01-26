@@ -23,7 +23,7 @@ int main()
 {
 	try
 	{
-		lab5();
+		lab6();
 	}
 	catch (string EX_INFO)
 	{
@@ -488,10 +488,7 @@ void lab5()
 
 	// Zamknięcie pliku
 	Sout.close();
-}
 
-
-	// NA POKAZ - WYNIKI NIE SPOJNE
 	//std::ofstream sim("symulacja.csv"); // Plik wyjściowy
 	//if (!sim.is_open()) throw string("Nie udało się otworzyć pliku symulacja.csv");
 
@@ -516,9 +513,125 @@ void lab5()
 	//	sim << w << "," << x0(0) << "," << x0(1) << "," << result.x(0) << "," << result.x(1) << "," << result.y(0) << "," << result.y(1) << "," << solution::f_calls << "\n";
 	//	w += 0.01;
 	//}
+}
 
+matrix load_data(const std::string& filename) {
+	std::ifstream file(filename);
+	if (!file.is_open()) throw std::runtime_error("Nie można otworzyć pliku");
+
+	matrix data;
+	file >> data; // Wczytanie całej macierzy z pliku
+	return data;
+}
+
+matrix fileToMatrix(int rows, int cols, std::string filename) {
+	matrix result = matrix(rows, cols);
+
+	ifstream file(filename);
+	if (!file.is_open()) {
+		throw string("Nie mozna otworzyæ pliku: " + filename);
+	}
+
+	int i = 0;
+	std::string line;
+	while (std::getline(file, line))
+	{
+		int j = 0;
+		std::istringstream lineStream(line);
+		std::string value;
+		while (lineStream >> value) {
+			result(i, j) = std::stod(value);
+			++j;
+		}
+		++i;
+	}
+
+	return result;
+}
 
 void lab6()
 {
+	//double sigma_tab[] = { 0.01, 0.1, 1, 10, 100 };
+	//int N = 2;
+
+	//matrix lb(N, 1);
+	//lb(0) = -5;
+	//lb(1) = -5;
+
+	//matrix ub(N, 1);
+	//ub(0) = 5;
+	//ub(1) = 5;
+
+	//int mi = 20;
+	//int lambda = 40;
+	//double epsilon = 1e-3;
+	//int Nmax = 10000;
+
+	//ofstream results("optimization_results.csv");
+	//if (!results.is_open()) throw string("Nie można otworzyć pliku CSV");
+
+	//results << "x1*,x2*,y*,f_calls,minimum globalne\n";
+
+	//for (int t = 0; t < 5; t++)
+	//{
+	//    for (int i = 0; i < 100; i++)
+	//    {
+	//        solution result = EA(ff6T, N, lb, ub, mi, lambda, sigma_tab[t], epsilon, Nmax);
+	//        results << result.x(0) << "," << result.x(1) << "," << result.y(0) << "," << solution::f_calls << "," << (result.y(0) < epsilon ? "TAK" : "NIE") << "\n";
+	//        solution::clear_calls();
+	//    }
+	//}
+
+	//matrix data = file_reader::fileToMatrix(1001, 2, "./polozenia.txt");
+	//ifstream positions("positions.txt");
+
+	//lb = matrix(2, 1, 0.1);
+	//ub = matrix(2, 1, 3);
+
+	//solution result = EA(ff6R, N, lb, ub, mi, lambda, matrix(2, 1, 1), 1e-2, Nmax, 1001, data);
+	//solution::clear_calls();
+
+	//matrix y;
+	//matrix Y0(4, 1);
+	//matrix* Y = solve_ode(df6, 0, 0.1, 100, Y0, NAN, result.x[0]);
+	//cout << Y[1];
+
+	//SEKCJA PRAWDZIWEGO PROBLEMU
+	ofstream real_file("realProblem.csv");
+	if (!real_file.is_open())throw string("PLIK CSV NIE OTWARTY");
+	//real_file << "x1, x2, y, f_calls, ?????\n";
+
+	double sigma[] = { 0.01, 0.1, 1, 10, 100 };
+	int sigma_size = 5;
+	int N = 2;
+
+	matrix data = fileToMatrix(1001, 2, "polozenia.txt");
+
+	matrix lb(N, 1);
+	lb(0) = 0.1;
+	lb(1) = 0.1;
+
+	matrix ub(N, 1);
+	ub(0) = 3;
+	ub(1) = 3;
+
+	int mi = 25;
+	int lambda = 50;
+	double epsilon = 1e-5;
+	int Nmax = 100000;
+
+	matrix simulation = matrix(0);
+	solution test;
+	solution::clear_calls();
+
+	real_file.open("simulation.csv");
+
+	test = EA(ff6R, N, lb, ub, mi, lambda, sigma[0], epsilon, Nmax, 1001, data);
+
+
+	cout << test << endl;
+	//matrix output = hcat (simulation[0], simulation[2]);
+	//real_file << output;
+	real_file.close();
 
 }
