@@ -549,6 +549,48 @@ matrix fileToMatrix(int rows, int cols, std::string filename) {
 	return result;
 }
 
+matrix loadExperimentalData(const std::string& filename)
+{
+	std::ifstream file(filename);
+	if (!file.is_open())
+	{
+		std::cerr << "Nie można otworzyć pliku: " << filename << std::endl;
+		return matrix(); // Zwraca pustą macierz
+	}
+
+	std::vector<double> x1_vals;
+	std::vector<double> x2_vals;
+	std::string line;
+
+	while (std::getline(file, line))
+	{
+		std::replace(line.begin(), line.end(), ',', '.'); // Zamiana ',' na '.'
+		std::replace(line.begin(), line.end(), ';', ' '); // Zamiana ';' na ' '
+
+		std::istringstream iss(line);
+		double x1, x2;
+		if (iss >> x1 >> x2)
+		{
+			x1_vals.push_back(x1);
+			x2_vals.push_back(x2);
+		}
+	}
+
+	file.close();
+
+	// Tworzenie macierzy na podstawie wczytanych danych
+	int rows = x1_vals.size();
+	matrix data_matrix(rows, 2); // Tworzymy macierz o wymiarach rows x 2
+
+	for (int i = 0; i < rows; ++i)
+	{
+		data_matrix(i, 0) = x1_vals[i]; // Pierwsza kolumna
+		data_matrix(i, 1) = x2_vals[i]; // Druga kolumna
+	}
+
+	return data_matrix;
+}
+
 void lab6()
 {
 	//double sigma_tab[] = { 0.01, 0.1, 1, 10, 100 };
@@ -582,56 +624,50 @@ void lab6()
 	//    }
 	//}
 
-	//matrix data = file_reader::fileToMatrix(1001, 2, "./polozenia.txt");
-	//ifstream positions("positions.txt");
-
-	//lb = matrix(2, 1, 0.1);
-	//ub = matrix(2, 1, 3);
-
-	//solution result = EA(ff6R, N, lb, ub, mi, lambda, matrix(2, 1, 1), 1e-2, Nmax, 1001, data);
-	//solution::clear_calls();
-
-	//matrix y;
-	//matrix Y0(4, 1);
-	//matrix* Y = solve_ode(df6, 0, 0.1, 100, Y0, NAN, result.x[0]);
-	//cout << Y[1];
-
-	//SEKCJA PRAWDZIWEGO PROBLEMU
-	ofstream real_file("realProblem.csv");
-	if (!real_file.is_open())throw string("PLIK CSV NIE OTWARTY");
-	//real_file << "x1, x2, y, f_calls, ?????\n";
-
-	double sigma[] = { 0.01, 0.1, 1, 10, 100 };
-	int sigma_size = 5;
 	int N = 2;
+	matrix lb(N, 1), ub(N, 1);
+	for (int i = 0; i < N; i++)
+	{
+		lb(i, 0) = -10.0;
+		ub(i, 0) = 10.0;
+	}
 
-	matrix data = fileToMatrix(1001, 2, "polozenia.txt");
+	// Parametry algorytmu
+	int mi = 5;
+	int lambda = 10;
+	double eps = 1e-3;
+	int Nmax = 10000;
 
-	matrix lb(N, 1);
-	lb(0) = 0.1;
-	lb(1) = 0.1;
+	N = 2; // Liczba zmiennych decyzyjnych: b1 i b2
+	matrix lb_real(N, 1), ub_real(N, 1);
+	lb_real(0, 0) = 0.1; // Dolna granica dla b1
+	lb_real(1, 0) = 0.1; // Dolna granica dla b2
+	ub_real(0, 0) = 3.0; // Górna granica dla b1
+	ub_real(1, 0) = 3.0; // Górna granica dla b2
 
-	matrix ub(N, 1);
-	ub(0) = 3;
-	ub(1) = 3;
+	double sigmaValues[] = { 0.01, 0.1, 1, 10, 100 };
+	// Parametry algorytmu
+	mi = 5;
+	lambda = 10;
+	eps = 1e-2; // 1e-1 fast calculations and ok results, 1e-2 better result but 3 mins calculation
+	Nmax = 10000;
 
-	int mi = 25;
-	int lambda = 50;
-	double epsilon = 1e-5;
-	int Nmax = 100000;
+	cout << "\nOptymalizacja problemu rzeczywistego:\n";
+	// OPTYMALIZACJA
+	matrix sigma0_real(N, 1, sigmaValues[0]);
 
-	matrix simulation = matrix(0);
-	solution test;
 	solution::clear_calls();
 
-	real_file.open("simulation.csv");
+	matrix ud1_real;
+	matrix ud2_real = loadExperimentalData("polozenia.txt"); // Experimantal data
 
-	test = EA(ff6R, N, lb, ub, mi, lambda, sigma[0], epsilon, Nmax, 1001, data);
+	solution bestSolReal = EA(ff6R, N, lb_real, ub_real, mi, lambda, sigma0_real, eps, Nmax, ud1_real, ud2_real);
 
-
-	cout << test << endl;
-	//matrix output = hcat (simulation[0], simulation[2]);
-	//real_file << output;
-	real_file.close();
+	double b1 = bestSolReal.x(0, 0);
+	double b2 = bestSolReal.x(1, 0);
+	double J = bestSolReal.y(0, 0);
+	int calls = solution::f_calls;
+	cout << "b1*, b2*, J(b*), Liczba wywolan funkcji celu\n";
+	cout << b1 << ", " << b2 << ", " << J << ", " << calls << "\n";
 
 }
